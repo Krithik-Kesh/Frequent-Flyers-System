@@ -1,7 +1,7 @@
 
 import csv
 import datetime
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 from airport import Airport
 from customer import Customer
@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
     # input_data = import_data('data/airports.csv', 'data/customers.csv',
     #     'data/segments.csv', 'data/trips.csv')
-    input_data = import_data('data/airports.csv', 'data/customers.csv',
+    input_data = import_data('../data/airports.csv', 'data/customers.csv',
                              'data/segments_small.csv', 'data/trips_small.csv')
 
     airports = create_airports(input_data[0])

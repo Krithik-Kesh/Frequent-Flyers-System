@@ -77,6 +77,7 @@ class Customer:
         """ A Customer of Python Air. """
 
         self.age = age
+        self.name = name
         self.nationality = nat
         self._customer_id = cus_id
         self._trips = {}

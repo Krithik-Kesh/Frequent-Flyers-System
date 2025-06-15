@@ -1,5 +1,3 @@
-
-import datetime
 from typing import List
 
 from customer import Customer
@@ -83,9 +81,15 @@ class CustomerFilter(Filter):
               1. return the original list <data>, and
               2. ensure your code does not crash.
         """
+        d = []
+        for c in customers:
+            if not c.get_id() == int(filter_string):
+                return data
+        for cid in data:
+            if cid.check_manifest(int(filter_string)):
+                d.append(cid)
+        return d
 
-        # TODO
-        return data
 
     def __str__(self) -> str:
         """ Returns a description of this filter to be displayed in the UI menu.
@@ -115,9 +119,23 @@ class DurationFilter(Filter):
               1. return the original list <data>, and
               2. ensure your code does not crash.
         """
+        if filter_string[0] not in ('L', 'G'):
+            return data
+        d = []
+        mins = int(filter_string[1:])
+        if filter_string[0] == 'L':
+            for time in data:
+                k = time.get_duration()
+                if k.total_seconds() / 60 < mins:
+                    d.append(time)
 
-        # TODO
-        return data
+        if filter_string[0] == 'G':
+            for time in data:
+                k = time.get_duration()
+                if k.total_seconds() / 60 > mins:
+                    d.append(time)
+        return d
+
 
     def __str__(self) -> str:
         """ Returns a description of this filter to be displayed in the UI menu

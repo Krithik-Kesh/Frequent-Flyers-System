@@ -38,7 +38,7 @@ MAP_MAX = (180.0, -90.0)
 SCREEN_SIZE = (1000, 700)
 
 # File Image Location
-MAP_FILE = 'images/map.png'
+MAP_FILE = '../images/map.png'
 
 
 class Visualizer:
