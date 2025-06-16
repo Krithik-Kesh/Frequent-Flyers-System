@@ -1,4 +1,4 @@
-
+"""Defines Airport Class"""
 from typing import Tuple
 
 

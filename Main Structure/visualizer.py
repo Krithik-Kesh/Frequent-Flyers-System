@@ -299,7 +299,7 @@ class Visualizer:
                             print("The cost of this trip is: ${:.2f}.".
                                   format(cus.get_cost_of_trip(tp)))
                             print("The total trip time is: {}-minutes.".
-                                  format(tp.get_total_trip_time()))
+                                  format(tp.get_total_trip_time))
                             print("The time in-flight is: {}-minutes.".
                                   format(tp.get_in_flight_time()))
                             print("-------------------------------------------")

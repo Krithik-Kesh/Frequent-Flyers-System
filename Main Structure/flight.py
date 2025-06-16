@@ -1,4 +1,4 @@
-
+"""Defines Trip and Flight Classes"""
 from __future__ import annotations
 
 import datetime
@@ -57,7 +57,7 @@ class FlightSegment:
     seat_availability: Dict[str, int]  # str: class, int: seats_available
     _flight_id: str
     _time: Tuple[datetime.datetime, datetime.datetime]
-    _base_fare_cost: float
+    _base_cost: float
     _flight_duration: datetime.time
     _flight_length: float
     _dep_loc: str
@@ -87,14 +87,14 @@ class FlightSegment:
         self._long_lat = long_lat
         self._manifest = []
         self._time = (dep, arr)
-        self._flight_duration = datetime.timedelta
+        self._flight_duration = arr - dep
         self.seat_availability = AIRPLANE_CAPACITY.copy()
         self.seat_capacity = AIRPLANE_CAPACITY.copy()
         self._flight_length = length
 
     def __repr__(self) -> str:
-        return ("[" + str(self._flight_id) + "]:" + str(self._dep_loc) + "->" +
-                str(self._arr_loc))
+        return ("[" + str(self._flight_id) + "]:" + str(self._dep_loc)
+                + "->" + str(self._arr_loc))
 
     def get_length(self) -> float:
         """ Returns the length, in KMs, of this flight segment. """
@@ -184,12 +184,12 @@ class FlightSegment:
             and restore the seat's availability. Otherwise, do nothing and
             return None.
         """
-
-        for i in self._manifest:
+        for i in self._manifest[:]:
             if i[0] == cid:
                 self._manifest.remove(i)
-                self.seat_availability[i] += 1
+                self.seat_availability[i[1]] += 1
         return None
+
 
 # ------------------------------------------------------------------------------
 class Trip:
@@ -219,7 +219,7 @@ class Trip:
         self.reservation_id = rid
         self._flights = flight_segments
         self.trip_departure = trip_date
-        self._customer_id = cid
+        self.customer_id = cid
 
     def get_flight_segments(self) -> List[FlightSegment]:
         """ Returns a list of all Flight Segments part of this booking. """
@@ -241,6 +241,7 @@ class Trip:
             total += int((arr - dep).total_seconds() // 60)
         return total
 
+    @property
     def get_total_trip_time(self) -> int:
         """ Returns the amount of time (in minutes) the trip takes,
             including all transit time (i.e. including waiting for the next
@@ -248,9 +249,10 @@ class Trip:
         """
         if not self._flights:
             return 0
-        first_dep, _ = self._flights[0].get_times()
-        _, last_arr = self._flights[-1].get_times()
+        first_dep = self._flights[0].get_times()
+        last_arr = self._flights[-1].get_times()
         return int((last_arr - first_dep).total_seconds() // 60)
+
 
 if __name__ == '__main__':
     import python_ta

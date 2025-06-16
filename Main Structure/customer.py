@@ -1,4 +1,4 @@
-
+"""Defines Customer class"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -87,22 +87,18 @@ class Customer:
 
     def get_id(self) -> int:
         """ Returns this customer's identification (ID). """
-
         return self._customer_id
 
     def get_trips(self) -> List[Trip]:
         """ Returns a list of Trips booked for this customer. """
-
-        return [self._trips]
+        return list(self._trips.keys())
 
     def get_total_flight_costs(self) -> float:
         """ Returns this customer's total flight costs. """
-
         return self.all_flight_costs
 
     def get_cost_of_trip(self, trip_lookup: Trip) -> Optional[float]:
         """ Returns the cost of that Trip, otherwise None. """
-
         if self._trips.get(trip_lookup) is None:
             return None
         else:
@@ -110,12 +106,10 @@ class Customer:
 
     def get_ff_status(self) -> str:
         """ Returns this customer's frequent flyer status. """
-
         return self._ff_status
 
     def get_miles(self) -> int:
         """ Returns this customer's qualifying miles. """
-
         return self._miles
 
     def book_trip(self, reservation_id: str,
@@ -129,8 +123,13 @@ class Customer:
             Precondition: the customer is guaranteed to have a seat on each of
                           the <segments>.
         """
-
-
+        d = []
+        for i in segments:
+            d.append(i[0])
+        trip = Trip(reservation_id, self._customer_id, trip_date, d)
+        cost = self.get_cost_of_trip(trip)
+        self._trips[trip] = cost
+        return trip
 
     def cancel_trip(self, canceled_trip: Trip,
                     segments: List[Tuple[FlightSegment, str]]) -> None:
@@ -142,8 +141,10 @@ class Customer:
             Precondition: the <canceled_trip> must be a valid Trip that this
                           customer has booked.
         """
-
-        # TODO
+        for i in segments:
+            i[0].cancel_seat(self._customer_id)
+        if canceled_trip in self._trips:
+            del self._trips[canceled_trip]
 
 
 if __name__ == '__main__':

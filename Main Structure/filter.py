@@ -1,3 +1,4 @@
+"""Implement Filter classes"""
 from typing import List
 
 from customer import Customer
@@ -5,7 +6,6 @@ from flight import FlightSegment
 
 
 # from time import sleep
-
 
 class Filter:
     """ A class for filtering flight segments based on some criterion.
@@ -90,7 +90,6 @@ class CustomerFilter(Filter):
                 d.append(cid)
         return d
 
-
     def __str__(self) -> str:
         """ Returns a description of this filter to be displayed in the UI menu.
             Unlike other __str__ methods, this one is required!
@@ -128,14 +127,12 @@ class DurationFilter(Filter):
                 k = time.get_duration()
                 if k.total_seconds() / 60 < mins:
                     d.append(time)
-
         if filter_string[0] == 'G':
             for time in data:
                 k = time.get_duration()
                 if k.total_seconds() / 60 > mins:
                     d.append(time)
         return d
-
 
     def __str__(self) -> str:
         """ Returns a description of this filter to be displayed in the UI menu
@@ -164,9 +161,15 @@ class LocationFilter(Filter):
               1. return the original list <data>, and
               2. your code must not crash.
         """
-
-        # TODO
-        return data
+        d = []
+        if len(filter_string) != 3:
+            return data
+        for i in data:
+            k = i.get_dep()
+            j = i.get_arr()
+            if filter_string in {k, j}:
+                d.append(i)
+        return d
 
     def __str__(self) -> str:
         """ Returns a description of this filter to be displayed in the UI menu.
@@ -200,9 +203,33 @@ class DateFilter(Filter):
               1. return the original list <data>, and
               2. ensure your code does not crash.
         """
-
-        # TODO
-        return data
+        if "/" in filter_string:
+            parts = filter_string.split("/")
+        elif "," in filter_string:
+            parts = filter_string.split(",")
+        else:
+            return data
+        if len(parts) != 2:
+            return data
+        try:
+            start = [int(x) for x in parts[0].strip().split("-")]
+            end = [int(x) for x in parts[1].strip().split("-")]
+        except ValueError:
+            return data
+        if len(start) != 3 or len(end) != 3:
+            return data
+        result = []
+        for i in data:
+            dep, arr = i.get_times()
+            dep_date = dep.date()
+            arr_date = arr.date()
+            start_valid = (dep_date.year, dep_date.month,
+                           dep_date.day) >= tuple(start)
+            end_valid = (arr_date.year, arr_date.month,
+                         arr_date.day) <= tuple(end)
+            if start_valid and end_valid:
+                result.append(i)
+        return result
 
     def __str__(self) -> str:
         """ Returns a description of this filter to be displayed in the UI menu.
@@ -229,8 +256,14 @@ class TripFilter(Filter):
               1. return the original list <data>, and
               2. ensure your code does not crash.
         """
-
-        # TODO
+        result = []
+        for cus in customers:
+            for trip in cus.get_trips():
+                if trip.get_reservation_id() == filter_string:
+                    for i in trip.get_flight_segments():
+                        if i in data:
+                            result.append(i)
+                    return result
         return data
 
     def __str__(self) -> str:

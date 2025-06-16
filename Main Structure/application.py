@@ -1,4 +1,4 @@
-
+"""Applications for creating customers, flight segments, airports and trips"""
 import csv
 import datetime
 from typing import Dict, List, Tuple
@@ -20,7 +20,7 @@ DEFAULT_BASE_COST = 0.1225
 
 def import_data(file_airports: str, file_customers: str, file_segments: str,
                 file_trips: str) -> Tuple[
-    List[List[str]], List[List[str]], List[List[str]], List[List[str]]]:
+        List[List[str]], List[List[str]], List[List[str]], List[List[str]]]:
     """ Opens all the data files <data/filename.csv> which stores the CSV data,
         and returns a tuple of lists of lists of strings. This contains the 
         read in data, line-by-line, (airports, customers, flights, trips).
@@ -58,9 +58,9 @@ def create_customers(log: List[List[str]]) -> Dict[int, Customer]:
         - The <log> list contains the input data in the correct format.
     """
     customers_dic = {}
-    for customers in log:
-        customer = Customer(int(customers[0]), customers[1], int(customers[2]), customers[3])
-        customers_dic[customers[0]] = customer
+    for i in log:
+        customer = Customer(int(i[0]), i[1], int(i[2]), i[3])
+        customers_dic[customer.get_id()] = customer
     return customers_dic
 
 
@@ -72,19 +72,29 @@ def create_flight_segments(log: List[List[str]]) \
     Precondition:
     - The <log> list contains the input data in the correct format.
     """
-    dic = {}
-    for j in log:
-        res_id = j[0]
-        dep_air = j[1]
-        arr_air = j[2]
-        dep_t = datetime.datetime.strptime(j[3], "%Y-%m-%d %H:%M")
-        arr_t = datetime.datetime.strptime(j[4], "%Y-%m-%d %H:%M")
-        seg = FlightSegment(res_id, dep_air, arr_air, dep_t, arr_t)
-        i = dep_t.date()
-        if i not in dic:
-            dic[i] = []
-        dic[i].append(seg)
-    return dic
+    d = {}
+    for row in log:
+        fid = row[0]
+        dep_code = row[1]
+        arr_code = row[2]
+        date_parts = list(map(int, row[3].split(":")))
+        dep_time_parts = list(map(int, row[4].split(":")))
+        arr_time_parts = list(map(int, row[5].split(":")))
+        year, month, day = date_parts
+        dep_dt = datetime.datetime(year, month, day,
+                                   dep_time_parts[0], dep_time_parts[1])
+        arr_dt = datetime.datetime(year, month, day,
+                                   arr_time_parts[0], arr_time_parts[1])
+        dist = float(row[6])
+        coords = ((0.0, 0.0), (0.0, 0.0))
+        seg = FlightSegment(fid, dep_dt, arr_dt,
+                            DEFAULT_BASE_COST, dist, dep_code, arr_code, coords)
+        dep_date = dep_dt.date()
+        if dep_date not in d:
+            d[dep_date] = []
+        d[dep_date].append(seg)
+    return d
+
 
 def create_airports(log: List[List[str]]) -> List[Airport]:
     """ Return a list of Airports with all applicable data, based
@@ -93,18 +103,16 @@ def create_airports(log: List[List[str]]) -> List[Airport]:
     Precondition:
     - The <log> list contains the input data in the correct format.
     """
-    Airport = []
+    airs = []
     for i in log:
         iata = i[0]
         name = i[1]
-        city = i[2]
-        country = i[3]
-        lat = float(i[4])
-        lon = float(i[5])
-        air = Airport(iata, name, city, country)
+        loc = (float(i[2]), float(i[3]))
+        air = Airport(iata, name, loc)
         AIRPORT_LOCATIONS[iata] = air
-        airports.append(air)
-    return Airport
+        airs.append(air)
+    return airs
+
 
 def load_trips(log: List[List[str]], customer_dict: Dict[int, Customer],
                flight_segments: Dict[datetime.date, List[FlightSegment]]) \
@@ -118,6 +126,31 @@ def load_trips(log: List[List[str]], customer_dict: Dict[int, Customer],
     - the flight segments are already correctly stored in the 
     <flight_segments>, indexed by their departure date
     """
+    d = []
+    for j in log:
+        res_id = j[0]
+        cus_id = int(j[1])
+        year, month, day = map(int, j[2].split("-"))
+        trip_date = datetime.date(year, month, day)
+        raw_segment_str = j[3]
+        cleaned = raw_segment_str.strip("[]")
+        entries = cleaned.split("),(")
+        segments = []
+        for i in entries:
+            i = i.strip("()").replace("'", "").replace('"', '')
+            parts = i.split(",")
+            if len(parts) < 2:
+                continue
+            dep_air = parts[0].strip()
+            seat_type = parts[1].strip()
+            for seg in flight_segments.get(trip_date, []):
+                if seg.get_dep() == dep_air:
+                    segments.append((seg, seat_type))
+                    break
+        if segments:
+            trip = customer_dict[cus_id].book_trip(res_id, segments, trip_date)
+            d.append(trip)
+    return d
 
 
 if __name__ == '__main__':
